@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        {% if greeting %}
+            <h2>{{ greeting }}</h2>
+        {% else %}
+            <h2>Welcome to our DevOps Demo App</h2>
+            <p>This is a simple Flask application built for the DevOps Midterm Project.</p>
+        {% endif %}
+        
+        <h3>Recent Messages:</h3>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message-card">
+                    <h3>{{ message.name }}</h3>
+                    <p>{{ message.message }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No messages yet. Be the first to <a href="{{ url_for('main.message') }}">leave a message</a>!</p>
+        {% endif %}
+    </div>
+{% endblock %}

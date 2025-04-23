@@ -5,7 +5,7 @@
   
   tasks:
     - name: Create virtual environment
-      command: python -m venv venv
+      command: python3 -m venv venv
       args:
         chdir: "{{ playbook_dir }}"
         creates: "{{ playbook_dir }}/venv"
@@ -16,9 +16,7 @@
         virtualenv: "{{ playbook_dir }}/venv"
     
     - name: Check if application is runnable
-      command: "{{ playbook_dir }}/venv/bin/python -c 'from app import create_app; app=create_app()'"
-      args:
-        chdir: "{{ playbook_dir }}"
+      shell: cd "{{ playbook_dir }}" && ./venv/bin/python -c "from app import create_app; app=create_app()"
       register: app_check
       ignore_errors: yes
     

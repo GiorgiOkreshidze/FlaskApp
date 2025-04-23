@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess
 import datetime
+import sys
 
 # Configuration
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -66,19 +67,45 @@ def deploy():
     
     log_message("Files copied successfully.")
     
-    # Create virtual environment in production
-    log_message("Setting up virtual environment...")
-    venv_path = os.path.join(DEPLOY_DIR, "venv")
-    subprocess.run(["python", "-m", "venv", venv_path])
-    
-    # Install dependencies
-    log_message("Installing dependencies...")
-    pip_path = os.path.join(venv_path, "bin" if os.name != "nt" else "Scripts", "pip")
-    requirements_path = os.path.join(DEPLOY_DIR, "requirements.txt")
-    subprocess.run([pip_path, "install", "-r", requirements_path])
-    
-    log_message("Deployment completed successfully.")
-    return True
+    try:
+        # Create virtual environment in production
+        log_message("Setting up virtual environment...")
+        venv_path = os.path.join(DEPLOY_DIR, "venv")
+        
+        # Try different approaches to create venv
+        try:
+            # Try with the current Python executable
+            subprocess.run([sys.executable, "-m", "venv", venv_path], check=True)
+        except subprocess.CalledProcessError:
+            # Try with python command directly
+            try:
+                if os.name == 'nt':  # Windows
+                    subprocess.run(["python", "-m", "venv", venv_path], check=True)
+                else:
+                    subprocess.run(["python3", "-m", "venv", venv_path], check=True)
+            except subprocess.CalledProcessError as e:
+                log_message(f"Error creating virtual environment: {e}")
+                return False
+        
+        # Install dependencies
+        log_message("Installing dependencies...")
+        
+        # Get the correct pip path based on the OS
+        if os.name == 'nt':  # Windows
+            pip_path = os.path.join(venv_path, "Scripts", "pip")
+        else:  # Unix/Linux/Mac
+            pip_path = os.path.join(venv_path, "bin", "pip")
+        
+        requirements_path = os.path.join(DEPLOY_DIR, "requirements.txt")
+        
+        subprocess.run([pip_path, "install", "-r", requirements_path], check=True)
+        
+        log_message("Deployment completed successfully.")
+        return True
+        
+    except Exception as e:
+        log_message(f"Deployment failed: {str(e)}")
+        return False
 
 def rollback():
     """Rollback to previous version"""
@@ -99,8 +126,6 @@ def rollback():
     return True
 
 if __name__ == "__main__":
-    import sys
-    
     if len(sys.argv) > 1 and sys.argv[1] == "rollback":
         rollback()
     else:

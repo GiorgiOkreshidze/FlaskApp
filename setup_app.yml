@@ -1,0 +1,27 @@
+---
+- name: Setup Flask Application Environment
+  hosts: localhost
+  become: no
+  
+  tasks:
+    - name: Create virtual environment
+      command: python -m venv venv
+      args:
+        chdir: "{{ playbook_dir }}"
+        creates: "{{ playbook_dir }}/venv"
+    
+    - name: Install requirements
+      pip:
+        requirements: "{{ playbook_dir }}/requirements.txt"
+        virtualenv: "{{ playbook_dir }}/venv"
+    
+    - name: Check if application is runnable
+      command: "{{ playbook_dir }}/venv/bin/python -c 'from app import create_app; app=create_app()'"
+      args:
+        chdir: "{{ playbook_dir }}"
+      register: app_check
+      ignore_errors: yes
+    
+    - name: Report application status
+      debug:
+        msg: "Application setup {{ 'succeeded' if app_check.rc == 0 else 'failed' }}"
